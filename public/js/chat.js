@@ -5,7 +5,7 @@ function scrollToBottom() {
   messages.scrollIntoView({ behavior: "smooth" });
 }
 
-socket.on("connect", () => {
+socket.on("connect", function () {
   let searchQuery = window.location.search.substring(1);
   let params = JSON.parse(
     '{"' +
@@ -24,11 +24,24 @@ socket.on("connect", () => {
       console.log("upppp");
     }
   });
-  console.log("connected to server");
 });
 
-socket.on("disconnect", () => {
+socket.on("disconnect", function () {
   console.log("Disconnected from server");
+});
+
+socket.on("updateUsersList", function (users) {
+  let ol = document.createElement("ol");
+
+  users.forEach(function (user) {
+    let li = document.createElement("li");
+    li.innerHTML = user;
+    ol.appendChild(li);
+  });
+
+  let usersList = document.querySelector("#users");
+  usersList.innerHTML = " ";
+  usersList.appendChild(ol);
 });
 
 socket.on("newMessage", (message) => {
@@ -43,12 +56,6 @@ socket.on("newMessage", (message) => {
   div.innerHTML = html;
   document.querySelector("#messages").appendChild(div);
   scrollToBottom();
-
-  // const formattedTime = moment(message.createdAt).format("LT");
-  // console.log("newMessage", message);
-  // let li = document.createElement("li");
-  // li.innerText = `${message.from} ${formattedTime}:${message.text}`;
-  // document.querySelector("body").appendChild(li);
 });
 socket.on("newLocationMessage", (message) => {
   const formattedTime = moment(message.createdAt).format("LT");
@@ -58,21 +65,13 @@ socket.on("newLocationMessage", (message) => {
   const html = Mustache.render(template, {
     from: message.from,
     text: message.text,
-    url: message.url
+    createdAt: formattedTime
   });
   const div = document.createElement("div");
   div.innerHTML = html;
+
   document.querySelector("#messages").appendChild(div);
   scrollToBottom();
-  // console.log("newLocationMessage", message);
-  // let li = document.createElement("li");
-  // let a = document.createElement("a");
-  // li.innerText = `${message.from} ${formattedTime}:`;
-  // a.setAttribute("target", "_blank");
-  // a.setAttribute("href", message.url);
-  // a.innerText = "My current Location";
-  // li.appendChild(a);
-  // document.querySelector("body").appendChild(li);
 });
 
 document.querySelector("#submit-btn").addEventListener("click", function (e) {
@@ -84,7 +83,9 @@ document.querySelector("#submit-btn").addEventListener("click", function (e) {
       from: "User",
       text: document.querySelector('input[name="message"]').value
     },
-    function () {}
+    function () {
+      document.querySelector('input[name="message"]').value = "";
+    }
   );
 });
 document
